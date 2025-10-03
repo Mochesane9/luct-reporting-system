@@ -26,7 +26,7 @@ const EnhancedReportForm = ({ user }) => {
   const [courseOptions, setCourseOptions] = useState([]);
   const [weekOptions] = useState(Array.from({ length: 52 }, (_, i) => `Week ${i + 1}`));
   const [reportHistory, setReportHistory] = useState([]);
-  const API_BASE_URL = 'https://luct-reporting-system-27vd.onrender.com'; // Match with App.js
+  const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com'; // Match with App.js
 
   const facultyOptions = [
     'FICT - Faculty of Information and Communication Technology',
