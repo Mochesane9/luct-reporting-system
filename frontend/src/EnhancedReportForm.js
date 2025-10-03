@@ -55,7 +55,7 @@ const EnhancedReportForm = ({ user }) => {
   const loadReportHistory = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/reports/history?lecturer_id=${user.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/lecturer/reports`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) setReportHistory(await response.json());
@@ -146,17 +146,30 @@ const EnhancedReportForm = ({ user }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const formDataToSend = new FormData();
-      for (const key in formData) {
-        if (key === 'supporting_docs' && formData[key]) formDataToSend.append(key, formData[key]);
-        else if (key !== 'supporting_docs') formDataToSend.append(key, formData[key]);
-      }
-      formDataToSend.append('lecturer_id', user.id);
+      
+      const reportData = {
+        faculty_name: formData.faculty_name,
+        class_name: formData.class_name,
+        week_of_reporting: formData.week,
+        date_of_lecture: formData.lecture_date,
+        course_name: formData.course_name,
+        course_code: formData.course_code,
+        actual_students_present: parseInt(formData.students_present),
+        total_registered_students: parseInt(formData.total_registered_students),
+        venue: formData.venue,
+        scheduled_lecture_time: formData.scheduled_time,
+        topic_taught: formData.topic_taught,
+        learning_outcomes: formData.learning_outcomes,
+        recommendations: formData.recommendations,
+      };
 
-      const response = await fetch(`${API_BASE_URL}/api/submit-enhanced-report`, {
+      const response = await fetch(`${API_BASE_URL}/api/lecturer/submit-report`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formDataToSend,
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reportData),
       });
 
       if (response.ok) {
@@ -200,7 +213,15 @@ const EnhancedReportForm = ({ user }) => {
   const handleEditReport = (reportId) => {
     const report = reportHistory.find(r => r.id === reportId);
     if (report) {
-      setFormData({ ...report, supporting_docs: null });
+      setFormData({ 
+        ...report, 
+        week: report.week_of_reporting,
+        lecture_date: report.date_of_lecture,
+        students_present: report.actual_students_present,
+        total_registered_students: report.total_registered_students,
+        scheduled_time: report.scheduled_lecture_time,
+        supporting_docs: null 
+      });
     }
   };
 
@@ -217,7 +238,7 @@ const EnhancedReportForm = ({ user }) => {
           <ul>
             {reportHistory.map(report => (
               <li key={report.id}>
-                {report.lecture_date} - {report.course_name}
+                {report.date_of_lecture} - {report.course_name} ({report.status})
                 <button onClick={() => handleEditReport(report.id)}>Edit</button>
               </li>
             ))}
