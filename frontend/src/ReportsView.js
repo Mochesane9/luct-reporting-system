@@ -4,6 +4,7 @@ import './App.css';
 const ReportsView = ({ user }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com';
 
   useEffect(() => {
     fetchReports();
@@ -12,7 +13,7 @@ const ReportsView = ({ user }) => {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://luct-reporting-backend-x1cx.onrender.com/api/reports', {
+      const response = await fetch(`${API_BASE_URL}/api/reports`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -21,6 +22,8 @@ const ReportsView = ({ user }) => {
       if (response.ok) {
         const data = await response.json();
         setReports(data);
+      } else {
+        console.error('Failed to fetch reports:', response.status);
       }
     } catch (error) {
       console.error('Error fetching reports:', error);
@@ -58,14 +61,19 @@ const ReportsView = ({ user }) => {
             <div key={report.id || index} className="report-card">
               <div className="report-header">
                 <h3>{report.course_name} - {report.class_name}</h3>
-                <span className="report-week">{report.week}</span>
+                <span className={`status ${report.status?.toLowerCase() || 'pending'}`}>
+                  {report.status || 'Pending'}
+                </span>
               </div>
               <div className="report-details">
                 <div className="detail">
-                  <strong>Date:</strong> {report.lecture_date}
+                  <strong>Date:</strong> {report.date_of_lecture || report.lecture_date}
                 </div>
                 <div className="detail">
-                  <strong>Students Present:</strong> {report.students_present}/{report.total_registered_students}
+                  <strong>Week:</strong> {report.week_of_reporting || report.week}
+                </div>
+                <div className="detail">
+                  <strong>Students Present:</strong> {report.actual_students_present || report.students_present}/{report.total_registered_students}
                 </div>
                 <div className="detail">
                   <strong>Topic:</strong> {report.topic_taught}
@@ -73,10 +81,17 @@ const ReportsView = ({ user }) => {
                 <div className="detail">
                   <strong>Venue:</strong> {report.venue}
                 </div>
+                {report.prl_feedback && (
+                  <div className="detail feedback">
+                    <strong>PRL Feedback:</strong> {report.prl_feedback}
+                  </div>
+                )}
               </div>
               <div className="report-actions">
                 <button className="view-btn">View Details</button>
-                <button className="edit-btn">Edit</button>
+                {report.status === 'Pending' && (
+                  <button className="edit-btn">Edit</button>
+                )}
               </div>
             </div>
           ))}
