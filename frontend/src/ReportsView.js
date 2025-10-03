@@ -12,7 +12,7 @@ const ReportsView = ({ user }) => {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/reports', {
+      const response = await fetch('https://luct-reporting-system-27vd.onrender.com/api/reports', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
