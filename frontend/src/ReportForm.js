@@ -24,7 +24,7 @@ const ReportForm = ({ user }) => {
   const [classOptions, setClassOptions] = useState([]);
   const [courseOptions, setCourseOptions] = useState([]);
   const [weekOptions] = useState(Array.from({ length: 52 }, (_, i) => `Week ${i + 1}`));
-  const API_BASE_URL = 'https://luct-reporting-system-27vd.onrender.com'; // Match with App.js and reportRoutes.js
+  const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com'; // Match with App.js and reportRoutes.js
 
   useEffect(() => {
     loadDropdownOptions();
