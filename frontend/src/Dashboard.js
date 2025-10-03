@@ -61,7 +61,7 @@ const Dashboard = ({ userRole, userName, userId }) => {
   const [showReportForm, setShowReportForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  const API_BASE_URL = 'https://luct-reporting-system-27vd.onrender.com';
+  const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com';
 
   useEffect(() => {
     loadDashboardData();
