@@ -88,7 +88,7 @@ const Footer = () => (
 );
 
 // API base URL - Ensure backend is running on this port
-const API_BASE_URL = 'https://luct-reporting-system-27vd.onrender.com';
+const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
