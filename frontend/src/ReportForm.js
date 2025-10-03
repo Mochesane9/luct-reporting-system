@@ -3,28 +3,31 @@ import './Reportform.css'; // Use a separate CSS file for styling
 
 const ReportForm = ({ user }) => {
   const [formData, setFormData] = useState({
-    faculty_id: '',
-    class_id: '',
-    week: '',
-    lecture_date: '',
-    course_id: '',
-    lecturer_id: user.id,
-    students_present: '',
+    faculty_name: 'FICT - Faculty of Information and Communication Technology',
+    class_name: '',
+    week_of_reporting: '',
+    date_of_lecture: '',
+    course_name: '',
+    course_code: '',
+    lecturer_name: user.fullName || '',
+    actual_students_present: '',
     total_registered_students: '',
     venue: '',
-    scheduled_time: '',
+    scheduled_lecture_time: '',
     topic_taught: '',
     learning_outcomes: '',
     recommendations: '',
-    supporting_docs: null,
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [facultyOptions, setFacultyOptions] = useState([]);
   const [classOptions, setClassOptions] = useState([]);
   const [courseOptions, setCourseOptions] = useState([]);
   const [weekOptions] = useState(Array.from({ length: 52 }, (_, i) => `Week ${i + 1}`));
   const API_BASE_URL = 'https://luct-reporting-backend-x1cx.onrender.com'; // Match with App.js and reportRoutes.js
+
+  const facultyOptions = [
+    'FICT - Faculty of Information and Communication Technology',
+  ];
 
   useEffect(() => {
     loadDropdownOptions();
@@ -35,17 +38,12 @@ const ReportForm = ({ user }) => {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      // Fetch faculties (simplified as departments for now)
-      setFacultyOptions([
-        { id: 1, name: 'FICT - Faculty of Information and Communication Technology' },
-      ]);
-
       // Fetch classes
-      const classesResponse = await fetch(`${API_BASE_URL}/api/lecturer/classes?faculty=FICT`, { headers });
+      const classesResponse = await fetch(`${API_BASE_URL}/api/lecturer/classes`, { headers });
       if (classesResponse.ok) setClassOptions(await classesResponse.json());
 
       // Fetch courses
-      const coursesResponse = await fetch(`${API_BASE_URL}/api/pl/courses?faculty=FICT`, { headers });
+      const coursesResponse = await fetch(`${API_BASE_URL}/api/courses`, { headers });
       if (coursesResponse.ok) setCourseOptions(await coursesResponse.json());
     } catch (error) {
       console.error('Error loading options:', error);
@@ -55,14 +53,16 @@ const ReportForm = ({ user }) => {
   const loadClassDetails = async (classId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/class-details/${classId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const response = await fetch(`${API_BASE_URL}/api/class-details/${classId}`, { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({
           ...prev,
           total_registered_students: data.total_registered_students || '',
           venue: data.venue || '',
-          scheduled_time: data.scheduled_time || '',
+          scheduled_lecture_time: data.scheduled_time || '',
         }));
       }
     } catch (error) {
@@ -71,20 +71,31 @@ const ReportForm = ({ user }) => {
   };
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      [name]: value,
     }));
     setErrors(prev => ({ ...prev, [name]: '' }));
 
-    if (name === 'class_id' && value) {
-      const selectedClass = classOptions.find(c => c.id === parseInt(value));
+    if (name === 'class_name' && value) {
+      const selectedClass = classOptions.find(c => c.name === value);
       if (selectedClass) {
         loadClassDetails(selectedClass.id);
         setFormData(prev => ({
           ...prev,
-          course_id: selectedClass.course_id || '',
+          course_name: selectedClass.name || '',
+          course_code: selectedClass.code || '',
+        }));
+      }
+    }
+
+    if (name === 'course_name' && value) {
+      const selectedCourse = courseOptions.find(c => c.name === value);
+      if (selectedCourse) {
+        setFormData(prev => ({
+          ...prev,
+          course_code: selectedCourse.code || '',
         }));
       }
     }
@@ -94,16 +105,19 @@ const ReportForm = ({ user }) => {
     const newErrors = {};
     const today = new Date('2025-10-01').toISOString().split('T')[0]; // Current date
 
-    if (!formData.faculty_id) newErrors.faculty_id = 'Faculty ID is required';
-    if (!formData.class_id) newErrors.class_id = 'Class ID is required';
-    if (!formData.week) newErrors.week = 'Week of reporting is required';
-    if (!formData.lecture_date) newErrors.lecture_date = 'Lecture date is required';
-    else if (new Date(formData.lecture_date) > new Date(today)) newErrors.lecture_date = 'Lecture date cannot be in the future';
-    if (!formData.course_id) newErrors.course_id = 'Course ID is required';
-    if (!formData.students_present || formData.students_present <= 0) newErrors.students_present = 'Valid student count is required';
-    if (formData.students_present > (formData.total_registered_students || Infinity)) newErrors.students_present = 'Students present cannot exceed total registered students';
+    if (!formData.faculty_name) newErrors.faculty_name = 'Faculty name is required';
+    if (!formData.class_name) newErrors.class_name = 'Class name is required';
+    if (!formData.week_of_reporting) newErrors.week_of_reporting = 'Week of reporting is required';
+    if (!formData.date_of_lecture) newErrors.date_of_lecture = 'Lecture date is required';
+    else if (new Date(formData.date_of_lecture) > new Date(today)) newErrors.date_of_lecture = 'Lecture date cannot be in the future';
+    if (!formData.course_name) newErrors.course_name = 'Course name is required';
+    if (!formData.course_code) newErrors.course_code = 'Course code is required';
+    if (!formData.lecturer_name) newErrors.lecturer_name = 'Lecturer name is required';
+    if (!formData.actual_students_present || formData.actual_students_present <= 0) newErrors.actual_students_present = 'Valid student count is required';
+    if (formData.actual_students_present > (formData.total_registered_students || Infinity)) newErrors.actual_students_present = 'Students present cannot exceed total registered students';
+    if (!formData.total_registered_students || formData.total_registered_students <= 0) newErrors.total_registered_students = 'Total registered students is required';
     if (!formData.venue.trim()) newErrors.venue = 'Venue is required';
-    if (!formData.scheduled_time) newErrors.scheduled_time = 'Scheduled time is required';
+    if (!formData.scheduled_lecture_time) newErrors.scheduled_lecture_time = 'Scheduled time is required';
     if (!formData.topic_taught.trim()) newErrors.topic_taught = 'Topic taught is required';
     if (!formData.learning_outcomes.trim()) newErrors.learning_outcomes = 'Learning outcomes are required';
     if (!formData.recommendations.trim()) newErrors.recommendations = 'Recommendations are required';
@@ -122,37 +136,51 @@ const ReportForm = ({ user }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const formDataToSend = new FormData();
-      for (const key in formData) {
-        if (key === 'supporting_docs' && formData[key]) formDataToSend.append(key, formData[key]);
-        else if (key !== 'supporting_docs') formDataToSend.append(key, formData[key]);
-      }
-      formDataToSend.append('lecturer_id', user.id);
+      
+      const reportData = {
+        faculty_name: formData.faculty_name,
+        class_name: formData.class_name,
+        week_of_reporting: formData.week_of_reporting,
+        date_of_lecture: formData.date_of_lecture,
+        course_name: formData.course_name,
+        course_code: formData.course_code,
+        lecturer_name: formData.lecturer_name,
+        actual_students_present: parseInt(formData.actual_students_present),
+        total_registered_students: parseInt(formData.total_registered_students),
+        venue: formData.venue,
+        scheduled_lecture_time: formData.scheduled_lecture_time,
+        topic_taught: formData.topic_taught,
+        learning_outcomes: formData.learning_outcomes,
+        recommendations: formData.recommendations,
+      };
 
-      const response = await fetch(`${API_BASE_URL}/api/submit-enhanced-report`, {
+      const response = await fetch(`${API_BASE_URL}/api/lecturer/submit-report`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formDataToSend,
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reportData),
       });
 
       const data = await response.json();
       if (response.ok) {
         alert('Report submitted successfully!');
         setFormData({
-          faculty_id: '',
-          class_id: '',
-          week: '',
-          lecture_date: '',
-          course_id: '',
-          lecturer_id: user.id,
-          students_present: '',
+          faculty_name: 'FICT - Faculty of Information and Communication Technology',
+          class_name: '',
+          week_of_reporting: '',
+          date_of_lecture: '',
+          course_name: '',
+          course_code: '',
+          lecturer_name: user.fullName || '',
+          actual_students_present: '',
           total_registered_students: '',
           venue: '',
-          scheduled_time: '',
+          scheduled_lecture_time: '',
           topic_taught: '',
           learning_outcomes: '',
           recommendations: '',
-          supporting_docs: null,
         });
       } else {
         alert('Error: ' + (data.error || 'Submission failed'));
@@ -174,63 +202,63 @@ const ReportForm = ({ user }) => {
         <div className="form-section">
           <div className="form-row">
             <div className="form-group">
-              <label>Faculty ID *</label>
+              <label>Faculty Name *</label>
               <select
-                name="faculty_id"
-                value={formData.faculty_id}
+                name="faculty_name"
+                value={formData.faculty_name}
                 onChange={handleChange}
-                className={errors.faculty_id ? 'error' : ''}
+                className={errors.faculty_name ? 'error' : ''}
               >
                 <option value="">Select Faculty</option>
-                {facultyOptions.map(faculty => (
-                  <option key={faculty.id} value={faculty.id}>{faculty.name}</option>
+                {facultyOptions.map((faculty, index) => (
+                  <option key={index} value={faculty}>{faculty}</option>
                 ))}
               </select>
-              {errors.faculty_id && <span className="error-message">{errors.faculty_id}</span>}
+              {errors.faculty_name && <span className="error-message">{errors.faculty_name}</span>}
             </div>
             <div className="form-group">
-              <label>Class ID *</label>
+              <label>Class Name *</label>
               <select
-                name="class_id"
-                value={formData.class_id}
+                name="class_name"
+                value={formData.class_name}
                 onChange={handleChange}
-                className={errors.class_id ? 'error' : ''}
+                className={errors.class_name ? 'error' : ''}
               >
                 <option value="">Select Class</option>
                 {classOptions.map(classItem => (
-                  <option key={classItem.id} value={classItem.id}>{classItem.name}</option>
+                  <option key={classItem.id} value={classItem.name}>{classItem.name}</option>
                 ))}
               </select>
-              {errors.class_id && <span className="error-message">{errors.class_id}</span>}
+              {errors.class_name && <span className="error-message">{errors.class_name}</span>}
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
               <label>Week of Reporting *</label>
               <select
-                name="week"
-                value={formData.week}
+                name="week_of_reporting"
+                value={formData.week_of_reporting}
                 onChange={handleChange}
-                className={errors.week ? 'error' : ''}
+                className={errors.week_of_reporting ? 'error' : ''}
               >
                 <option value="">Select Week</option>
                 {weekOptions.map(week => (
                   <option key={week} value={week}>{week}</option>
                 ))}
               </select>
-              {errors.week && <span className="error-message">{errors.week}</span>}
+              {errors.week_of_reporting && <span className="error-message">{errors.week_of_reporting}</span>}
             </div>
             <div className="form-group">
               <label>Date of Lecture *</label>
               <input
                 type="date"
-                name="lecture_date"
-                value={formData.lecture_date}
+                name="date_of_lecture"
+                value={formData.date_of_lecture}
                 onChange={handleChange}
-                className={errors.lecture_date ? 'error' : ''}
+                className={errors.date_of_lecture ? 'error' : ''}
                 max={new Date().toISOString().split('T')[0]}
               />
-              {errors.lecture_date && <span className="error-message">{errors.lecture_date}</span>}
+              {errors.date_of_lecture && <span className="error-message">{errors.date_of_lecture}</span>}
             </div>
           </div>
         </div>
@@ -238,32 +266,59 @@ const ReportForm = ({ user }) => {
         <div className="form-section">
           <div className="form-row">
             <div className="form-group">
-              <label>Course ID *</label>
+              <label>Course Name *</label>
               <select
-                name="course_id"
-                value={formData.course_id}
+                name="course_name"
+                value={formData.course_name}
                 onChange={handleChange}
-                className={errors.course_id ? 'error' : ''}
+                className={errors.course_name ? 'error' : ''}
               >
                 <option value="">Select Course</option>
                 {courseOptions.map(course => (
-                  <option key={course.id} value={course.id}>{course.name}</option>
+                  <option key={course.id} value={course.name}>{course.name}</option>
                 ))}
               </select>
-              {errors.course_id && <span className="error-message">{errors.course_id}</span>}
+              {errors.course_name && <span className="error-message">{errors.course_name}</span>}
+            </div>
+            <div className="form-group">
+              <label>Course Code *</label>
+              <input
+                type="text"
+                name="course_code"
+                value={formData.course_code}
+                onChange={handleChange}
+                className={errors.course_code ? 'error' : ''}
+                placeholder="e.g., DIWA2110"
+                readOnly
+              />
+              {errors.course_code && <span className="error-message">{errors.course_code}</span>}
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Lecturer's Name *</label>
+              <input
+                type="text"
+                name="lecturer_name"
+                value={formData.lecturer_name}
+                onChange={handleChange}
+                className={errors.lecturer_name ? 'error' : ''}
+                readOnly
+              />
+              {errors.lecturer_name && <span className="error-message">{errors.lecturer_name}</span>}
             </div>
             <div className="form-group">
               <label>Students Present *</label>
               <input
                 type="number"
-                name="students_present"
-                value={formData.students_present}
+                name="actual_students_present"
+                value={formData.actual_students_present}
                 onChange={handleChange}
-                className={errors.students_present ? 'error' : ''}
+                className={errors.actual_students_present ? 'error' : ''}
                 min="0"
                 max={formData.total_registered_students || 100}
               />
-              {errors.students_present && <span className="error-message">{errors.students_present}</span>}
+              {errors.actual_students_present && <span className="error-message">{errors.actual_students_present}</span>}
             </div>
           </div>
           <div className="form-row">
@@ -301,21 +356,12 @@ const ReportForm = ({ user }) => {
               <label>Scheduled Time *</label>
               <input
                 type="time"
-                name="scheduled_time"
-                value={formData.scheduled_time}
+                name="scheduled_lecture_time"
+                value={formData.scheduled_lecture_time}
                 onChange={handleChange}
-                className={errors.scheduled_time ? 'error' : ''}
+                className={errors.scheduled_lecture_time ? 'error' : ''}
               />
-              {errors.scheduled_time && <span className="error-message">{errors.scheduled_time}</span>}
-            </div>
-            <div className="form-group">
-              <label>Supporting Documents</label>
-              <input
-                type="file"
-                name="supporting_docs"
-                onChange={handleChange}
-                accept="application/pdf,image/*"
-              />
+              {errors.scheduled_lecture_time && <span className="error-message">{errors.scheduled_lecture_time}</span>}
             </div>
           </div>
           <div className="form-group full-width">
@@ -361,20 +407,20 @@ const ReportForm = ({ user }) => {
             {loading ? 'Submitting...' : '📤 Submit Report'}
           </button>
           <button type="button" className="clear-btn" onClick={() => setFormData({
-            faculty_id: '',
-            class_id: '',
-            week: '',
-            lecture_date: '',
-            course_id: '',
-            lecturer_id: user.id,
-            students_present: '',
+            faculty_name: 'FICT - Faculty of Information and Communication Technology',
+            class_name: '',
+            week_of_reporting: '',
+            date_of_lecture: '',
+            course_name: '',
+            course_code: '',
+            lecturer_name: user.fullName || '',
+            actual_students_present: '',
             total_registered_students: '',
             venue: '',
-            scheduled_time: '',
+            scheduled_lecture_time: '',
             topic_taught: '',
             learning_outcomes: '',
             recommendations: '',
-            supporting_docs: null,
           })}>
             🗑️ Clear Form
           </button>
