@@ -62,14 +62,14 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
     // Role-specific validations
     if (formData.role === 'student') {
       if (!formData.studentNumber.trim()) newErrors.studentNumber = 'Student number is required';
-      else if (!/ST\d{6}/.test(formData.studentNumber)) newErrors.studentNumber = 'Student number must be like ST123456';
+      else if (!/^ST\d{7}$/.test(formData.studentNumber)) newErrors.studentNumber = 'Student number must be like ST1234567 (ST + 7 digits)';
       if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
       if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
       else if (!phoneRegex.test(formData.phone)) newErrors.phone = 'Phone must be +266 followed by 8 digits (e.g., +26612345678)';
     } else if (formData.role === 'lecturer' || formData.role === 'prl' || formData.role === 'pl') {
       if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
       if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
-      else if (!/EMP\d{5}/.test(formData.employeeId)) newErrors.employeeId = 'Employee ID must be like EMP12345';
+      else if (!/^\d+$/.test(formData.employeeId)) newErrors.employeeId = 'Employee ID must contain digits only';
       if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
       else if (!phoneRegex.test(formData.phone)) newErrors.phone = 'Phone must be +266 followed by 8 digits (e.g., +26612345678)';
     }
@@ -238,7 +238,7 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
                   value={formData.studentNumber}
                   onChange={handleChange}
                   className={errors.studentNumber ? 'error' : ''}
-                  placeholder="e.g., ST123456"
+                  placeholder="e.g., ST1234567"
                 />
                 {errors.studentNumber && <span className="error-message">{errors.studentNumber}</span>}
               </div>
@@ -264,7 +264,7 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={errors.phone ? 'error' : ''}
-                  placeholder="+266 1234 5678"
+                  placeholder="+26612345678"
                 />
                 {errors.phone && <span className="error-message">{errors.phone}</span>}
               </div>
@@ -310,7 +310,7 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
                   value={formData.employeeId}
                   onChange={handleChange}
                   className={errors.employeeId ? 'error' : ''}
-                  placeholder="e.g., EMP12345"
+                  placeholder="e.g., 12345 (digits only)"
                 />
                 {errors.employeeId && <span className="error-message">{errors.employeeId}</span>}
               </div>
@@ -324,7 +324,7 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={errors.phone ? 'error' : ''}
-                  placeholder="+266 1234 5678"
+                  placeholder="+26612345678"
                 />
                 {errors.phone && <span className="error-message">{errors.phone}</span>}
               </div>
