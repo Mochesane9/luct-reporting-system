@@ -11,7 +11,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'https://luct-reporting-system-sxdo.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
@@ -1524,6 +1524,49 @@ app.get('/api/monitoring', authenticateToken, (req, res) => {
     }
   ];
   res.json(monitoringData);
+});
+
+// ==================== NEW MISSING ENDPOINTS ====================
+
+// Reports endpoint for ReportsView component
+app.get('/api/reports', authenticateToken, (req, res) => {
+  let userReports = [];
+  
+  if (req.user.role === 'lecturer') {
+    userReports = lecturerReports.filter(report => report.lecturer_id === req.user.id);
+  } else if (req.user.role === 'prl' || req.user.role === 'pl') {
+    userReports = lecturerReports;
+  } else if (req.user.role === 'student') {
+    // Students might see some report data, or return empty
+    userReports = [];
+  }
+  
+  res.json(userReports);
+});
+
+// Get report history for a lecturer
+app.get('/api/reports/history', authenticateToken, requireRole(['lecturer']), (req, res) => {
+  const { lecturer_id } = req.query;
+  const userReports = lecturerReports.filter(report => report.lecturer_id === parseInt(lecturer_id) || report.lecturer_id === req.user.id);
+  res.json(userReports);
+});
+
+// Get class details
+app.get('/api/class-details/:classId', authenticateToken, (req, res) => {
+  const classId = parseInt(req.params.classId);
+  const classItem = availableCourses.find(course => 
+    course.classes && course.classes.some(cls => cls.id === classId)
+  );
+  
+  if (!classItem) {
+    return res.status(404).json({ error: 'Class not found' });
+  }
+  
+  res.json({
+    total_registered_students: classItem.total_registered,
+    venue: classItem.classes[0]?.venue || 'Not assigned',
+    scheduled_time: classItem.classes[0]?.time || 'Not scheduled'
+  });
 });
 
 // ==================== HEALTH CHECK ====================
