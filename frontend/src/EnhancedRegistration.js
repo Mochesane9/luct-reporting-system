@@ -22,7 +22,7 @@ const EnhancedRegistration = ({ onBackToLogin, onRegistrationSuccess }) => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const API_BASE_URL = 'http://localhost:5001'; // Match with App.js
+  const API_BASE_URL = 'https://luct-reporting-system-27vd.onrender.com'; // Match with App.js
 
   const departments = [
     'FICT - Faculty of Information and Communication Technology',
